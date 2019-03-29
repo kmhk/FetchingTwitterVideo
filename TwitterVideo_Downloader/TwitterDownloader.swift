@@ -6,7 +6,6 @@
 //  Copyright © 2019 KMHK. All rights reserved.
 //
 
-//import UIKit
 import Foundation
 import SwiftSoup
 
@@ -43,8 +42,7 @@ class TwitterDownloader: NSObject {
             }
         }
         
-        //twitterUrl = urlString
-        twitterUrl = "https://twitter.com/NorthKoreaDPRK/status/1111018049656758272"
+        twitterUrl = urlString
     }
     
     
@@ -52,7 +50,7 @@ class TwitterDownloader: NSObject {
 
     func startDownload(outDir: String?) {
         guard let video_player_url = resolveTwitterURL() else {
-            self.error_handler!(NSError(domain: "'Invalid twitter URL!'", code: 404, userInfo: nil))
+            self.error_handler!(NSError(domain: "'Invalid twitter video URL!'", code: 404, userInfo: nil))
             return
         }
         
@@ -84,7 +82,7 @@ class TwitterDownloader: NSObject {
         
         let req = URLRequest(url: URL(string: video_player)!)
         URLSession.shared.dataTask(with: req) { (data, response, error) in
-            if error != nil {
+            guard error == nil else {
                 self.error_handler!(error!)
                 return
             }
@@ -96,7 +94,7 @@ class TwitterDownloader: NSObject {
                 let link = try doc.select("script").first()
                 let text = try link?.attr("src")
                 
-                print("js linke: ", text!)
+                print("js link: ", text!)
                 self.getBearerToken(src: text!)
                 
             } catch let error {
@@ -106,9 +104,10 @@ class TwitterDownloader: NSObject {
     }
     
     private func getBearerToken(src: String) {
+//        usleep(1000)
         let req = URLRequest(url: URL(string: src)!)
         URLSession.shared.dataTask(with: req) { (data, response, error) in
-            if error != nil {
+            guard error == nil else {
                 self.error_handler!(error!)
                 return
             }
@@ -128,6 +127,9 @@ class TwitterDownloader: NSObject {
     }
     
     private func getM3U8(token: String) {
+//        usleep(1000)
+        print("talking to api with auth token: ", token)
+        
         let player_config = "https://api.twitter.com/1.1/videos/tweet/config/" + tweet_id
         var req = URLRequest(url: URL(string: player_config)!,
                              cachePolicy: URLRequest.CachePolicy.returnCacheDataElseLoad,
@@ -136,19 +138,32 @@ class TwitterDownloader: NSObject {
         
         // Talk to the API to get m3u8 url
         URLSession.shared.dataTask(with: req) { (data, response, error) in
-            if error != nil {
+            guard error == nil else {
                 self.error_handler!(error!)
                 return
             }
             
+            print("response: ", response!)
+            print("data: ", String(data: data!, encoding: String.Encoding.utf8)!)
+            
+            if (response as? HTTPURLResponse)?.statusCode == 429 {
+                self.error_handler!(NSError(domain: "'Too many request to twitter!'", code: 429, userInfo: nil))
+                return
+            }
+            
             // get m3u8 url
-            //print(String(data: data!, encoding: String.Encoding.utf8)!)
             do {
                 let doc = try JSONSerialization.jsonObject(with: data!,
                                                            options: JSONSerialization.ReadingOptions.mutableContainers)
-                let dict = (doc as! [String: Any])["track"]
-                let url = (dict as! [String: Any])["playbackUrl"] as! String
-                print("m3u8 url: ", url)
+                let dict = (doc as! [String: Any])["track"] as! [String: Any]
+                if let url_mp4 = (dict["vmapUrl"] as? String) {
+                    print("mp4 url: ", url_mp4)
+                } else if let url_m3u8 = (dict["playbackUrl"] as? String) {
+                    print("m3u8 url: ", url_m3u8)
+                } else {
+                    print("nothing video url")
+                }
+                
             } catch let error {
                 self.error_handler!(error)
             }
