@@ -14,8 +14,9 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        let url = "https://twitter.com/futurism/status/882987478541533189"
-//        let url = "https://twitter.com/Ubisoft/status/1111301575010668545"
+//        let url = "https://twitter.com/futurism/status/882987478541533189"
+        let url = "https://twitter.com/Ubisoft/status/1110950258912256001"
+//        let url = "https://twitter.com/i/status/1110950258912256001"
         
         let downloader = TwitterDownloader(urlString: url)
         downloader.delegate = self

@@ -135,6 +135,7 @@ class TwitterDownloader: NSObject {
                              cachePolicy: URLRequest.CachePolicy.returnCacheDataElseLoad,
                              timeoutInterval: 10)
         req.addValue(token, forHTTPHeaderField: "Authorization")
+        req.addValue("application/x-www-form-urlencoded;charset=UTF-8", forHTTPHeaderField: "Content-Type")
         
         // Talk to the API to get m3u8 url
         URLSession.shared.dataTask(with: req) { (data, response, error) in
@@ -143,11 +144,13 @@ class TwitterDownloader: NSObject {
                 return
             }
             
-            print("response: ", response!)
-            print("data: ", String(data: data!, encoding: String.Encoding.utf8)!)
+            //print("response: ", response!)
+            //print("data: ", String(data: data!, encoding: String.Encoding.utf8)!)
             
-            if (response as? HTTPURLResponse)?.statusCode == 429 {
-                self.error_handler!(NSError(domain: "'Too many request to twitter!'", code: 429, userInfo: nil))
+            if (response as? HTTPURLResponse)?.statusCode != 200 {
+                self.error_handler!(NSError(domain: "'Too many request to twitter!'",
+                                            code: ((response as? HTTPURLResponse)?.statusCode)!,
+                                            userInfo: nil))
                 return
             }
             
@@ -156,8 +159,8 @@ class TwitterDownloader: NSObject {
                 let doc = try JSONSerialization.jsonObject(with: data!,
                                                            options: JSONSerialization.ReadingOptions.mutableContainers)
                 let dict = (doc as! [String: Any])["track"] as! [String: Any]
-                if let url_mp4 = (dict["vmapUrl"] as? String) {
-                    print("mp4 url: ", url_mp4)
+                if let url_vmap = (dict["vmapUrl"] as? String) {
+                    print("vmap url: ", url_vmap)
                 } else if let url_m3u8 = (dict["playbackUrl"] as? String) {
                     print("m3u8 url: ", url_m3u8)
                 } else {
