@@ -28,7 +28,17 @@ class ViewController: UIViewController {
 
 extension ViewController: TwitterDownloaderDelegate {
     func downloadingFailed(error: Error) {
-        print("downloading failed with error: %@", error)
+        print("downloading failed with error: ", error)
+    }
+
+
+    func downloadingSuccess(url: URL) {
+        print("downloading finished")
+    }
+
+
+    func downloadingProgress(progress: Float, status: String)
+        
     }
     
 }

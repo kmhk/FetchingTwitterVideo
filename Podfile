@@ -7,5 +7,6 @@ target 'TwitterVideo_Downloader' do
 
   # Pods for TwitterVideo_Downloader
   pod 'SwiftSoup'
+  pod 'NicooM3u8Downloader'
 
 end

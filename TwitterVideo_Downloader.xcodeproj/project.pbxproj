@@ -28,6 +28,7 @@
 		CE73F47A224C707900A20F34 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		CE73F47C224C707900A20F34 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CE73F482224C716A00A20F34 /* TwitterDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwitterDownloader.swift; sourceTree = "<group>"; };
+		CE8FD1B522507DD400259EA1 /* TwitterVideo_Downloader-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TwitterVideo_Downloader-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,7 +49,6 @@
 				823B192147A542953F10C64C /* Pods-TwitterVideo_Downloader.debug.xcconfig */,
 				5D4F08321C61FE44983B6DFB /* Pods-TwitterVideo_Downloader.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -88,6 +88,7 @@
 				CE73F479224C707900A20F34 /* LaunchScreen.storyboard */,
 				CE73F47C224C707900A20F34 /* Info.plist */,
 				CE73F482224C716A00A20F34 /* TwitterDownloader.swift */,
+				CE8FD1B522507DD400259EA1 /* TwitterVideo_Downloader-Bridging-Header.h */,
 			);
 			path = TwitterVideo_Downloader;
 			sourceTree = "<group>";
@@ -126,6 +127,7 @@
 				TargetAttributes = {
 					CE73F46C224C707300A20F34 = {
 						CreatedOnToolsVersion = 10.1;
+						LastSwiftMigration = 1010;
 					};
 				};
 			};
@@ -192,12 +194,14 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-TwitterVideo_Downloader/Pods-TwitterVideo_Downloader-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/NicooM3u8Downloader/NicooM3u8Downloader.framework",
 				"${BUILT_PRODUCTS_DIR}/SwiftSoup/SwiftSoup.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NicooM3u8Downloader.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftSoup.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -361,6 +365,7 @@
 			baseConfigurationReference = 823B192147A542953F10C64C /* Pods-TwitterVideo_Downloader.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = TwitterVideo_Downloader/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -369,6 +374,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "KMHK.TwitterVideo-Downloader";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "TwitterVideo_Downloader/TwitterVideo_Downloader-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -379,6 +386,7 @@
 			baseConfigurationReference = 5D4F08321C61FE44983B6DFB /* Pods-TwitterVideo_Downloader.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = TwitterVideo_Downloader/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -387,6 +395,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "KMHK.TwitterVideo-Downloader";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "TwitterVideo_Downloader/TwitterVideo_Downloader-Bridging-Header.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

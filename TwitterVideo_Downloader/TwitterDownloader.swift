@@ -8,14 +8,19 @@
 
 import Foundation
 import SwiftSoup
+import NicooM3u8Downloader
 
 
 protocol TwitterDownloaderDelegate: AnyObject {
+    func downloadingSuccess(url: URL)
     func downloadingFailed(error: Error)
+    func downloadingProgress(progress: Float, status: String)
 }
 
 extension TwitterDownloaderDelegate {
+    func downloadingSuccess(url: URL) { }
     func downloadingFailed(error: Error) { }
+    func downloadingProgress(progress: Float, status: String) { }
 }
 
 class TwitterDownloader: NSObject {
@@ -78,7 +83,7 @@ class TwitterDownloader: NSObject {
     }
     
     private func grabVideoClient(video_player: String) {
-        print("video_player_url: ", video_player)
+        print("video_player_url: \(video_player)")
         
         let req = URLRequest(url: URL(string: video_player)!)
         URLSession.shared.dataTask(with: req) { (data, response, error) in
@@ -88,7 +93,6 @@ class TwitterDownloader: NSObject {
             }
             
             // grab the video client HTML
-            //print(String(data: data!, encoding: String.Encoding.utf8)!)
             do {
                 let doc = try SwiftSoup.parse(String(data: data!, encoding: String.Encoding.utf8)!)
                 let link = try doc.select("script").first()
@@ -104,7 +108,6 @@ class TwitterDownloader: NSObject {
     }
     
     private func getBearerToken(src: String) {
-//        usleep(1000)
         let req = URLRequest(url: URL(string: src)!)
         URLSession.shared.dataTask(with: req) { (data, response, error) in
             guard error == nil else {
@@ -127,8 +130,7 @@ class TwitterDownloader: NSObject {
     }
     
     private func getM3U8(token: String) {
-//        usleep(1000)
-        print("talking to api with auth token: ", token)
+        print("talking to api with auth token: \(token)")
         
         let player_config = "https://api.twitter.com/1.1/videos/tweet/config/" + tweet_id
         var req = URLRequest(url: URL(string: player_config)!,
@@ -144,9 +146,6 @@ class TwitterDownloader: NSObject {
                 return
             }
             
-            //print("response: ", response!)
-            //print("data: ", String(data: data!, encoding: String.Encoding.utf8)!)
-            
             if (response as? HTTPURLResponse)?.statusCode != 200 {
                 self.error_handler!(NSError(domain: "'Too many request to twitter!'",
                                             code: ((response as? HTTPURLResponse)?.statusCode)!,
@@ -154,7 +153,7 @@ class TwitterDownloader: NSObject {
                 return
             }
             
-            // get m3u8 url
+            // get video url with m3u8 or vmap
             do {
                 let doc = try JSONSerialization.jsonObject(with: data!,
                                                            options: JSONSerialization.ReadingOptions.mutableContainers)
@@ -163,6 +162,7 @@ class TwitterDownloader: NSObject {
                     print("vmap url: ", url_vmap)
                 } else if let url_m3u8 = (dict["playbackUrl"] as? String) {
                     print("m3u8 url: ", url_m3u8)
+                    self.downloadM3U8(url: url_m3u8)
                 } else {
                     print("nothing video url")
                 }
@@ -171,5 +171,80 @@ class TwitterDownloader: NSObject {
                 self.error_handler!(error)
             }
         }.resume()
+    }
+    
+    private func downloadM3U8(url: String) {
+        let yagor = NicooYagor()
+        yagor.directoryName = tweet_id
+        yagor.m3u8URL = url
+        yagor.delegate = self
+        yagor.parse()
+    }
+    
+    private func mergeTSClip(tmpURL: URL, yagor: NicooYagor) {
+        let directoryURL = tmpURL.path + "/" + tweet_id + "/"
+        let mergedTS = tmpURL.path + "/" + tweet_id + ".mpg"
+        //let mergedTS = directoryURL + tweet_id + ".mpg"
+        
+        do {
+            let files = try FileManager.default.contentsOfDirectory(atPath: directoryURL).sorted()
+            
+            FileManager.default.createFile(atPath: mergedTS, contents: nil, attributes: nil)
+            let writter = FileHandle(forWritingAtPath: mergedTS)
+            
+            // merge ts clip file
+            for file in files {
+                if file.lowercased().range(of: ".ts") == nil {
+                    continue
+                }
+                
+                let reader = FileHandle(forReadingAtPath: directoryURL + file)
+                var data = reader?.readData(ofLength: 0x400)
+                while (data?.count)! > 0 {
+                    writter?.write(data!)
+                    data = reader?.readData(ofLength: 0x400)
+                }
+                reader?.closeFile()
+            }
+            writter?.closeFile()
+            
+            // remove temp ts files
+            yagor.deleteDownloadedContents(with: tweet_id)
+            
+            if self.delegate != nil {
+                self.delegate?.downloadingSuccess(url: URL(fileURLWithPath: mergedTS))
+            }
+            
+        } catch let error {
+            self.error_handler!(error)
+        }
+    }
+    
+}
+
+
+// MARK: - NicooM3U8Downloader delegate
+
+extension TwitterDownloader: YagorDelegate {
+    func videoDownloadSucceeded(by yagor: NicooYagor) {
+        let filePath = NicooDownLoadHelper.getDocumentsDirectory().appendingPathComponent(NicooDownLoadHelper.downloadFile)
+        //print("downLoadFilePath = \(filePath). videoFileName = \(yagor.directoryName)")
+        mergeTSClip(tmpURL: filePath, yagor: yagor)
+    }
+    
+    
+    func videoDownloadFailed(by yagor: NicooYagor) {
+        //print("Video download failed. \(yagor.directoryName)")
+        self.error_handler!(NSError(domain: "Video download failed. \(yagor.directoryName)",
+                                    code: 400,
+                                    userInfo: nil))
+    }
+    
+    
+    func update(progress: Float, yagor: NicooYagor) {
+        //print("downloading video \(progress * 100) %...")
+        if self.delegate != nil {
+            self.delegate?.downloadingProgress(progress: progress, status: "downloading")
+        }
     }
 }
